@@ -1,19 +1,37 @@
-def print_trip_summary(destination, country, days, budget, travel_month):
-    print("="*28)
-    print("KELANA AI - PLAN WITH US")
-    print("="*28)
-    print(f"Destination: {destination}")
-    print(f"Country: {country}")
-    print(f"Days: {days}")
-    print(f"Budget: {budget:.0f} {currency}")
-    print(f"Currency: {currency}")
-    print(f"Travel_Month: {travel_month}")
-    
-destination = input("Where do you wanna go? :")
-country = input("Which country? : " )
-days = int(input("How many days? : "))
-budget = float(input("How much your budget? : "))
-currency = input("Currency (USD/IDR/etc) : ").upper()
-travel_month = input("Travel month? : ")
+from services.trip_service import (
+    calculate_daily_budget, 
+    get_trip_category, 
+    get_travel_season, 
+    get_recommendation_places
+)
 
-print_trip_summary(destination,country, days, budget, travel_month)
+def print_destination(destination):
+    print(f"Destination     : {destination}")
+
+def print_recommendation_places(destination):
+    print("Recommended Places")
+    for place in get_recommendation_places(destination):
+        print(f"- {place}")
+    print()
+
+def print_trip_summary(destination, days, budget, month):
+    daily_budget = calculate_daily_budget(budget, days)
+    category = get_trip_category(budget)
+    season = get_travel_season(month)
+
+    print("=" * 28)
+    print("KelanaAI")
+    print("=" * 28)
+    print()
+    print_destination(destination)
+    print(f"Days        = {days}")
+    print(f"Budget      = {budget} USD")
+    print(f"Category    = {category}")
+    print(f"Daily budget= {daily_budget:.0f} USD/Day")
+    print(f"Travel Month= {month}")
+    print(f"Season      = {season}")
+    print()
+    print_recommendation_places(destination)
+
+# Panggil fungsi dengan string biasa (bukan list)
+print_trip_summary("Japan", 5, 1500, "December")
