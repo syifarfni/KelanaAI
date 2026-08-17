@@ -25,6 +25,9 @@ def get_transportation_recommendation(category):
     else:
         return "Flight"
 
+def list_transportation():
+    return ["Bus", "Train", "Flight"]
+
 def get_recommendation_places(destination):
     recommendation = {
         "Japan" : ["Tokyo tower", "Shibuya", "Mount Fuji"],
@@ -35,4 +38,4 @@ def get_recommendation_places(destination):
     if isinstance(destination, list):
         destination = destination[0]
 
-    return recommendation.get(destination, ["City Center", "Local Market", "Popular Landmark"])
+    return recommendation.get(destination.capitalize(), ["City Center", "Local Market", "Popular Landmark"])
