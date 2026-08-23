@@ -65,13 +65,7 @@ def create_trip(request: TripRequest):
     category     = get_trip_category(
         request.budget
         )
-    ai_recommendation = get_ai_recommendation(
-        destination=request.destination,
-        days=request.days,
-        budget=request.budget,
-        travel_style=category,
-    )
-
+    
     # create a Trip ORM object
     trip = Trip(
         destination  = request.destination,
@@ -79,7 +73,6 @@ def create_trip(request: TripRequest):
         budget       = request.budget,
         category     = category,
         daily_budget = daily_budget,
-        ai_recommendation = ai_recommendation,
     )
 
     # save to PostgreSQL
@@ -89,6 +82,32 @@ def create_trip(request: TripRequest):
     db.refresh(trip)   
     db.close()
     return trip
+
+@app.post("/api/v1/trips/{trip_id}/generate")
+def generate_recommendation(trip_id: int):
+    db = SessionLocal()
+    trip =db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        db.close()
+        raise HTTPException(
+            status_code = 404, 
+            detail = f"Trip with id {trip_id} not found"
+        )
+
+    ai_recommendation = get_ai_recommendation(
+        destination=trip.destination,
+        days=trip.days,
+        budget=trip.budget,
+        travel_style=trip.category,
+    )
+
+    trip.ai_recommendation = ai_recommendation
+
+    db.commit()
+    db.refresh(trip)
+    db.close()
+    return trip
+
 
 @app.get("/api/v1/trips")
 def list_trips():

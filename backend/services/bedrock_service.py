@@ -44,13 +44,48 @@ def get_ai_recommendation(destination: str, days: int, budget: float, travel_sty
     """
     model_id = os.getenv("MODEL_ID", "amazon.nova-lite-v1:0")
 
-    prompt = (
-        f"You are an experienced travel planner.\n"
-        f"Create a {days}-day itinerary for {destination}.\n"
-        f"Budget: USD {budget:,.0f}\n"
-        f"Travel Style: {travel_style}.\n"
-        f"Give the answer with markdown format, header(##) and bullet list (-)"
-    )
+    
+    prompt = f"""
+        Create a {days}-day travel itinerary for {destination}.
+
+        Budget category: {travel_style}
+        Budget: {budget}
+
+        For EACH DAY, create a structured daily plan with exactly these sections:
+
+        Morning:
+        - Include 2-3 specific morning activities.
+        - Include breakfast or a local morning experience when appropriate.
+
+        Afternoon:
+        - Include at least one cultural site.
+        - Include at least one local experience.
+
+        Evening:
+        - Recommend a specific type of dinner spot or local food experience.
+        - Include an evening entertainment or nightlife activity.
+
+        Use this format:
+
+        Day 1: [Title]
+
+        Morning:
+        - Activity 1
+        - Activity 2
+        - Activity 3
+
+        Afternoon:
+        - Cultural site
+        - Local experience
+
+        Evening:
+        - Dinner recommendation
+        - Nightlife / evening entertainment
+
+        Continue this structure until Day {days}.
+        Give the answer with markdown format, header(##) and bullet list (-)
+        """
+      
 
     # Format request body sesuai Amazon Nova / Bedrock Converse API
     request_body = {
