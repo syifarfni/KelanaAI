@@ -11,10 +11,12 @@ from pydantic import BaseModel
 from database import init_db
 from models.trip import Trip
 from database import SessionLocal, init_db
+from services.bedrock_service import get_ai_recommendation
 
 
 app = FastAPI()
 init_db()
+
 
 
 
@@ -25,10 +27,11 @@ def home():
         "message" : "Hai Syifa From KelanaAI"
     }
 
-class TripRequest(BaseModel):
-    destination: str
-    days: int
-    budget: float
+@app.get("/health")
+def home():
+    return {
+        "Status" : "OK"
+    }
 
 
 
@@ -46,11 +49,28 @@ def print_list_transportation():
         "transportation" : transport 
     }
 
+class TripRequest(BaseModel):
+    destination: str
+    days:       int
+    budget:     float
+
+
 @app.post("/api/v1/trips")
 def create_trip(request: TripRequest):
     # reuse Session 2 business logic
-    daily_budget = calculate_daily_budget(request.budget, request.days)
-    category     = get_trip_category(request.budget)
+    daily_budget = calculate_daily_budget(
+        request.budget, 
+        request.days
+        )
+    category     = get_trip_category(
+        request.budget
+        )
+    ai_recommendation = get_ai_recommendation(
+        destination=request.destination,
+        days=request.days,
+        budget=request.budget,
+        travel_style=category,
+    )
 
     # create a Trip ORM object
     trip = Trip(
@@ -59,6 +79,7 @@ def create_trip(request: TripRequest):
         budget       = request.budget,
         category     = category,
         daily_budget = daily_budget,
+        ai_recommendation = ai_recommendation,
     )
 
     # save to PostgreSQL
@@ -121,31 +142,31 @@ def delete_trip(trip_id: int):
     return trip
 
 
-def print_destination(destination):
-    print(f"Destination = {destination}")
+# def print_destination(destination):
+#     print(f"Destination = {destination}")
 
 
-def print_trip_summary(destination, days, budget, month):
-    daily_budget = calculate_daily_budget(budget, days)
-    category = get_trip_category(budget)
-    season = get_travel_season(month)
+# def print_trip_summary(destination, days, budget, month):
+#     daily_budget = calculate_daily_budget(budget, days)
+#     category = get_trip_category(budget)
+#     season = get_travel_season(month)
 
-    print("=" * 28)
-    print("KelanaAI")
-    print("=" * 28)
-    print()
-    print_destination(destination)
-    print(f"Days        = {days}")
-    print(f"Budget      = {budget} USD")
-    print(f"Category    = {category}")
-    print(f"Daily budget= {daily_budget:.0f} USD/Day")
-    print(f"Travel Month= {month}")
-    print(f"Season      = {season}")
-    print()
-    print_recommendation_places(destination)
+#     print("=" * 28)
+#     print("KelanaAI")
+#     print("=" * 28)
+#     print()
+#     print_destination(destination)
+#     print(f"Days        = {days}")
+#     print(f"Budget      = {budget} USD")
+#     print(f"Category    = {category}")
+#     print(f"Daily budget= {daily_budget:.0f} USD/Day")
+#     print(f"Travel Month= {month}")
+#     print(f"Season      = {season}")
+#     print()
+#     print_recommendation_places(destination)
 
 
-# Panggil fungsi dengan string biasa (bukan list)
-print_trip_summary("Japan", 5, 1500, "December")
+# # Panggil fungsi dengan string biasa (bukan list)
+# print_trip_summary("Japan", 5, 1500, "December")
 
 
