@@ -9,6 +9,7 @@ class Trip(Base):
     days                    = Column(Integer, nullable=False)
     budget                  = Column(Float, nullable=False)
     category                = Column(String, nullable=False)
+    travel_style              = Column(String, nullable=False)
     daily_budget            = Column(Integer, nullable=False)
     ai_recommendation       = Column(Text, nullable=True)
     created_at              = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

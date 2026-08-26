@@ -83,7 +83,7 @@ def get_ai_recommendation(destination: str, days: int, budget: float, travel_sty
         - Nightlife / evening entertainment
 
         Continue this structure until Day {days}.
-        Give the answer with markdown format, header(##) and bullet list (-)
+        Give the answer user friendly
         """
       
 
@@ -100,7 +100,7 @@ def get_ai_recommendation(destination: str, days: int, budget: float, travel_sty
             }
         ],
         "inferenceConfig": {
-            "maxTokens": 800,
+            "maxTokens": 2048,
             "temperature": 0.7,
             "topP": 0.9
         }

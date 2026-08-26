@@ -7,6 +7,7 @@ from services.trip_services import (
     list_transportation
 )
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from database import init_db
 from models.trip import Trip
@@ -16,6 +17,14 @@ from services.bedrock_service import get_ai_recommendation
 
 app = FastAPI()
 init_db()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
@@ -53,6 +62,7 @@ class TripRequest(BaseModel):
     destination: str
     days:       int
     budget:     float
+    travel_style: str
 
 
 @app.post("/api/v1/trips")
@@ -66,13 +76,26 @@ def create_trip(request: TripRequest):
         request.budget
         )
     
+    ai_recommendation = None
+    try:
+        ai_recommendation = get_ai_recommendation(
+            destination=request.destination,
+            days=request.days,
+            budget=request.budget,
+            travel_style=request.travel_style,
+        )
+    except Exception as e:
+        print(f"[Bedrock] ERROR: {type(e).__name__}: {e}")
+    
     # create a Trip ORM object
     trip = Trip(
-        destination  = request.destination,
-        days         = request.days,
-        budget       = request.budget,
-        category     = category,
-        daily_budget = daily_budget,
+        destination       = request.destination,
+        days              = request.days,
+        budget            = request.budget,
+        category          = category,
+        travel_style      = request.travel_style,
+        daily_budget      = daily_budget,
+        ai_recommendation = ai_recommendation,
     )
 
     # save to PostgreSQL
@@ -98,7 +121,7 @@ def generate_recommendation(trip_id: int):
         destination=trip.destination,
         days=trip.days,
         budget=trip.budget,
-        travel_style=trip.category,
+        travel_style=trip.travel_style,
     )
 
     trip.ai_recommendation = ai_recommendation
