@@ -1,19 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-
-interface TripResult {
-  id: number;
-  destination: string;
-  days: number;
-  budget: number;
-  category: string;
-  travel_style: string;
-  daily_budget: number;
-  ai_recommendation: string | null;
-  created_at: string;
-}
+import Link from "next/link";
+import { Trip } from "@/types/trip";
+import { createTrip, generateRecommendation } from "@/services/TripServices";
+import ItineraryMarkdown from "@/components/ItineraryMarkdown";
 
 const TRAVEL_STYLES = ["Family", "Solo", "Backpacker", "Couple", "Luxury"];
 
@@ -32,7 +23,7 @@ export default function Home() {
   const [travelStyle, setTravelStyle] = useState("Family");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TripResult | null>(null);
+  const [result, setResult] = useState<Trip | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,41 +33,12 @@ export default function Home() {
 
     try {
       // Step 1: create trip
-      const response = await fetch("http://localhost:8000/api/v1/trips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destination,
-          days,
-          budget,
-          travel_style: travelStyle,
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        const detail = err.detail;
-        if (Array.isArray(detail)) {
-          throw new Error(detail.map((d: { msg: string }) => d.msg).join(", "));
-        }
-        throw new Error(
-          typeof detail === "string" ? detail : "Something went wrong"
-        );
-      }
-
-      const trip: TripResult = await response.json();
+      const trip = await createTrip({ destination, days, budget, travel_style: travelStyle });
       setResult(trip);
 
       // Step 2: generate AI recommendation
-      const genResponse = await fetch(
-        `http://localhost:8000/api/v1/trips/${trip.id}/generate`,
-        { method: "POST" }
-      );
-
-      if (genResponse.ok) {
-        const tripWithAI: TripResult = await genResponse.json();
-        setResult(tripWithAI);
-      }
+      const tripWithAI = await generateRecommendation(trip.id);
+      setResult(tripWithAI);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -118,8 +80,15 @@ export default function Home() {
             let KelanaAI craft the perfect itinerary for you.
           </p>
 
-          {/* Stats row */}
-         
+          {/* History link */}
+          <div className="mt-8">
+            <Link
+              href="/trips"
+              className="inline-flex items-center gap-2 bg-[#ffffff18] hover:bg-[#ffffff28] border border-[#ffffff22] rounded-full px-5 py-2 text-sm text-[#c8d4a0] transition-colors"
+            >
+              🕘 View Trip History
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -330,32 +299,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Itinerary content */}
               <div className="px-6 py-6">
-                <ReactMarkdown
-                  components={{
-                    h3: ({ children }) => (
-                      <h3 className="text-base font-bold text-[#2e3a20] mt-5 mb-2" style={{ fontFamily: "var(--font-playfair), serif" }}>{children}</h3>
-                    ),
-                    h4: ({ children }) => (
-                      <h4 className="text-sm font-semibold text-[#5a6e42] mt-3 mb-1">{children}</h4>
-                    ),
-                    p: ({ children }) => (
-                      <p className="text-sm text-[#3a4430] leading-relaxed mb-2">{children}</p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc list-inside text-sm text-[#3a4430] space-y-1 mb-3 ml-2">{children}</ul>
-                    ),
-                    li: ({ children }) => (
-                      <li className="leading-relaxed">{children}</li>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-semibold text-[#2e3a20]">{children}</strong>
-                    ),
-                  }}
-                >
-                  {result.ai_recommendation}
-                </ReactMarkdown>
+                <ItineraryMarkdown content={result.ai_recommendation} />
               </div>
             </div>
           ) : (
