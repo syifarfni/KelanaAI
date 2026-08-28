@@ -5,8 +5,11 @@ import Link from "next/link";
 import { Trip } from "@/types/trip";
 import { getTrips } from "@/services/TripServices";
 import TripCard from "@/components/TripCard";
+import Pagination from "@/components/Pagination";
 
 type SortOption = "newest" | "oldest" | "highest_budget";
+
+const ITEMS_PER_PAGE = 10;
 
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -15,6 +18,7 @@ export default function TripsPage() {
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     getTrips()
@@ -23,10 +27,14 @@ export default function TripsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Reset ke page 1 setiap kali filter/sort berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, sort]);
+
   const filtered = useMemo(() => {
     let result = [...trips];
 
-    // Search by destination OR travel style
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       result = result.filter(
@@ -36,7 +44,6 @@ export default function TripsPage() {
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       if (sort === "newest")
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -50,6 +57,13 @@ export default function TripsPage() {
     return result;
   }, [trips, search, sort]);
 
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
   const hasActiveFilter = search.trim() !== "" || sort !== "newest";
 
   function resetFilters() {
@@ -60,7 +74,7 @@ export default function TripsPage() {
   const SORT_OPTIONS: { value: SortOption; label: string; icon: string }[] = [
     { value: "newest", label: "Newest", icon: "⬇" },
     { value: "oldest", label: "Oldest", icon: "⬆" },
-    { value: "highest_budget", label: "Higest Budget", icon: "💰" },
+    { value: "highest_budget", label: "Highest Budget", icon: "💰" },
   ];
 
   return (
@@ -142,8 +156,13 @@ export default function TripsPage() {
             <div className="flex items-center justify-between">
               <p className="text-xs text-[#9a9e88]">
                 Showing{" "}
+                <span className="font-semibold text-[#5a6e42]">
+                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
+                </span>{" "}
+                of{" "}
                 <span className="font-semibold text-[#5a6e42]">{filtered.length}</span>{" "}
-                of {trips.length} trips
+                trips
               </p>
               {hasActiveFilter && (
                 <button
@@ -233,12 +252,19 @@ export default function TripsPage() {
         )}
 
         {/* Trip grid */}
-        {!loading && !error && filtered.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
-          </div>
+        {!loading && !error && paginated.length > 0 && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {paginated.map((trip) => (
+                <TripCard key={trip.id} trip={trip} />
+              ))}
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </div>
 
