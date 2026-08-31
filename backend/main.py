@@ -175,13 +175,11 @@ def update_trip(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    trip = db.query(Trip).filter(
-        Trip.id == trip_id,
-        Trip.user_id == current_user.id,
-    ).first()
-
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if trip is None:
         raise HTTPException(status_code=404, detail=f"Trip {trip_id} not found")
+    if trip.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You don't have permission to update this trip")
 
     trip.destination  = request.destination
     trip.days         = request.days
@@ -200,13 +198,11 @@ def delete_trip(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    trip = db.query(Trip).filter(
-        Trip.id == trip_id,
-        Trip.user_id == current_user.id,
-    ).first()
-
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if trip is None:
         raise HTTPException(status_code=404, detail=f"Trip {trip_id} not found")
+    if trip.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You don't have permission to delete this trip")
 
     db.delete(trip)
     db.commit()
