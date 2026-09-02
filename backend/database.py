@@ -25,6 +25,7 @@ def init_db() -> None:
     # import all models so their metadata is registered before create_all
     import models.user  # noqa: F401
     import models.trip  # noqa: F401
+    import models.conversation
     Base.metadata.create_all(bind=engine)
  
  
