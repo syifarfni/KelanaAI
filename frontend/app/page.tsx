@@ -1,22 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Trip } from "@/types/trip";
 import { createTrip, generateRecommendation } from "@/services/TripServices";
+import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 import ItineraryMarkdown from "@/components/ItineraryMarkdown";
+import { STYLE_ICONS } from "@/constants/tripStyles";
 
 const TRAVEL_STYLES = ["Family", "Solo", "Backpacker", "Couple", "Luxury"];
 
-const STYLE_ICONS: Record<string, string> = {
-  Family: "👨‍👩‍👧‍👦",
-  Solo: "🧳",
-  Backpacker: "🎒",
-  Couple: "💑",
-  Luxury: "✨",
-};
-
 export default function Home() {
+  const { user, ready, signOut } = useAuth();
+
   const [destination, setDestination] = useState("");
   const [days, setDays] = useState<number>(5);
   const [budget, setBudget] = useState<number>(2000);
@@ -32,34 +28,34 @@ export default function Home() {
     setResult(null);
 
     try {
-      // Step 1: create trip
       const trip = await createTrip({ destination, days, budget, travel_style: travelStyle });
       setResult(trip);
-
-      // Step 2: generate AI recommendation
       const tripWithAI = await generateRecommendation(trip.id);
       setResult(tripWithAI);
     } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("401")) { signOut(); return; }
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
+  if (!ready) return null;
+
   return (
-    <main
+    <div
       className="min-h-screen bg-[#f4f1e8]"
       style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
     >
-      {/* ── Hero Section ── */}
+      <Navbar user={user} onSignOut={signOut} />
+
+      {/* ── Hero ── */}
       <section className="relative bg-[#3d4a2e] overflow-hidden">
-        {/* Decorative circles */}
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-[#4e5e38] opacity-40" />
         <div className="absolute -bottom-10 -left-10 w-56 h-56 rounded-full bg-[#5a6e42] opacity-30" />
         <div className="absolute top-8 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#4a5c34] opacity-20" />
 
         <div className="relative z-10 max-w-3xl mx-auto px-6 py-20 text-center">
-          {/* Logo */}
           <div className="inline-flex items-center gap-2 bg-[#ffffff18] rounded-full px-5 py-1.5 mb-8 border border-[#ffffff22]">
             <span className="text-[#c8d4a0] text-xs font-medium tracking-widest uppercase">
               AI-Powered Travel Planner
@@ -80,39 +76,39 @@ export default function Home() {
             let KelanaAI craft the perfect itinerary for you.
           </p>
 
-          {/* History link */}
-          <div className="mt-8">
-            <Link
-              href="/trips"
-              className="inline-flex items-center gap-2 bg-[#ffffff18] hover:bg-[#ffffff28] border border-[#ffffff22] rounded-full px-5 py-2 text-sm text-[#c8d4a0] transition-colors"
-            >
-              🕘 View Trip History
-            </Link>
+          {/* Stats row */}
+          <div className="mt-10 flex justify-center gap-10">
+            {[
+              { label: "Destinations", value: "50+" },
+              { label: "Happy Travelers", value: "10K+" },
+              { label: "Itineraries", value: "25K+" },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <p className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-playfair), serif" }}>
+                  {s.value}
+                </p>
+                <p className="text-[#8a9e70] text-xs mt-0.5">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Form Section ── */}
+      {/* ── Form ── */}
       <section className="max-w-2xl mx-auto px-6 -mt-8 relative z-20">
         <div className="bg-white rounded-3xl shadow-xl border border-[#e0ddd0] p-8">
           <div className="flex items-center gap-3 mb-7">
             <div className="w-8 h-8 rounded-full bg-[#3d4a2e] flex items-center justify-center">
               <span className="text-white text-sm">✈</span>
             </div>
-            <h2
-              className="text-xl font-semibold text-[#2e3a20]"
-              style={{ fontFamily: "var(--font-playfair), serif" }}
-            >
+            <h2 className="text-xl font-semibold text-[#2e3a20]" style={{ fontFamily: "var(--font-playfair), serif" }}>
               Where are you heading?
             </h2>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Destination */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">
-                Destination
-              </label>
+              <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">Destination</label>
               <input
                 type="text"
                 placeholder="e.g. Japan, Bali, Paris..."
@@ -123,182 +119,89 @@ export default function Home() {
               />
             </div>
 
-            {/* Days + Budget side by side */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">
-                  Duration (days)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
-                  required
-                  className="border border-[#d0cdb8] rounded-xl px-4 py-3 text-sm text-[#2e3a20] bg-[#fafaf5] focus:outline-none focus:ring-2 focus:ring-[#6b7a50] focus:border-transparent transition"
-                />
+                <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">Duration (days)</label>
+                <input type="number" min={1} max={30} value={days} onChange={(e) => setDays(Number(e.target.value))} required
+                  className="border border-[#d0cdb8] rounded-xl px-4 py-3 text-sm text-[#2e3a20] bg-[#fafaf5] focus:outline-none focus:ring-2 focus:ring-[#6b7a50] focus:border-transparent transition" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">
-                  Budget (USD)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={budget}
-                  onChange={(e) => setBudget(Number(e.target.value))}
-                  required
-                  className="border border-[#d0cdb8] rounded-xl px-4 py-3 text-sm text-[#2e3a20] bg-[#fafaf5] focus:outline-none focus:ring-2 focus:ring-[#6b7a50] focus:border-transparent transition"
-                />
+                <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">Budget (USD)</label>
+                <input type="number" min={0} value={budget} onChange={(e) => setBudget(Number(e.target.value))} required
+                  className="border border-[#d0cdb8] rounded-xl px-4 py-3 text-sm text-[#2e3a20] bg-[#fafaf5] focus:outline-none focus:ring-2 focus:ring-[#6b7a50] focus:border-transparent transition" />
               </div>
             </div>
 
-            {/* Travel Style pills */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">
-                Travel Style
-              </label>
+              <label className="text-xs font-semibold text-[#6b7a50] uppercase tracking-widest">Travel Style</label>
               <div className="flex flex-wrap gap-2">
                 {TRAVEL_STYLES.map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => setTravelStyle(style)}
+                  <button key={style} type="button" onClick={() => setTravelStyle(style)}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition cursor-pointer ${
-                      travelStyle === style
-                        ? "bg-[#3d4a2e] text-white border-[#3d4a2e]"
-                        : "bg-white text-[#5a6a40] border-[#c8c9a8] hover:border-[#6b7a50]"
-                    }`}
-                  >
-                    <span>{STYLE_ICONS[style]}</span>
-                    {style}
+                      travelStyle === style ? "bg-[#3d4a2e] text-white border-[#3d4a2e]" : "bg-white text-[#5a6a40] border-[#c8c9a8] hover:border-[#6b7a50]"
+                    }`}>
+                    <span>{STYLE_ICONS[style]}</span>{style}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-1 bg-[#3d4a2e] hover:bg-[#2e3820] disabled:bg-[#9aaa80] text-white font-semibold rounded-xl py-3.5 text-sm transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md"
-            >
+            <button type="submit" disabled={loading}
+              className="mt-1 bg-[#3d4a2e] hover:bg-[#2e3820] disabled:bg-[#9aaa80] text-white font-semibold rounded-xl py-3.5 text-sm transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md">
               {loading ? (
                 <>
-                  <svg
-                    className="animate-spin h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8z"
-                    />
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                   </svg>
                   Crafting your itinerary...
                 </>
-              ) : (
-                <>✈ Generate My Itinerary</>
-              )}
+              ) : <>✈ Generate My Itinerary</>}
             </button>
           </form>
 
-          {/* Error */}
           {error && (
-            <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-              {error}
-            </div>
+            <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>
           )}
         </div>
       </section>
 
-      {/* ── Result Section ── */}
+      {/* ── Result ── */}
       {result && (
         <section className="max-w-2xl mx-auto px-6 mt-8 mb-16">
-          {/* Trip Summary Cards */}
           <div className="mb-3">
-            <h2
-              className="text-2xl font-bold text-[#2e3a20] mb-1"
-              style={{ fontFamily: "var(--font-playfair), serif" }}
-            >
-              Your Trip to{" "}
-              <span className="text-[#5a6e42] capitalize">
-                {result.destination}
-              </span>
+            <h2 className="text-2xl font-bold text-[#2e3a20] mb-1" style={{ fontFamily: "var(--font-playfair), serif" }}>
+              Your Trip to <span className="text-[#5a6e42] capitalize">{result.destination}</span>
             </h2>
-            <p className="text-sm text-[#8a9070]">
-              Here&apos;s your personalized {result.days}-day travel plan
-            </p>
+            <p className="text-sm text-[#8a9070]">Here&apos;s your personalized {result.days}-day travel plan</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[
-              {
-                label: "Budget",
-                value: `$${result.budget.toLocaleString()}`,
-                icon: "💰",
-              },
-              {
-                label: "Daily Budget",
-                value: `$${result.daily_budget.toLocaleString()}/day`,
-                icon: "📅",
-              },
-              {
-                label: "Travel Style",
-                value: result.travel_style,
-                icon: STYLE_ICONS[result.travel_style] ?? "🧳",
-              },
-              {
-                label: "Category",
-                value: result.category,
-                icon: "🏷️",
-              },
+              { label: "Budget", value: `$${result.budget.toLocaleString()}`, icon: "💰" },
+              { label: "Daily Budget", value: `$${result.daily_budget.toLocaleString()}/day`, icon: "📅" },
+              { label: "Travel Style", value: result.travel_style, icon: STYLE_ICONS[result.travel_style] ?? "🧳" },
+              { label: "Category", value: result.category, icon: "🏷️" },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="bg-white border border-[#e0ddd0] rounded-2xl p-4 text-center shadow-sm"
-              >
+              <div key={item.label} className="bg-white border border-[#e0ddd0] rounded-2xl p-4 text-center shadow-sm">
                 <span className="text-2xl">{item.icon}</span>
                 <p className="text-xs text-[#8a9070] mt-1 mb-0.5">{item.label}</p>
-                <p className="text-sm font-semibold text-[#2e3a20] leading-tight">
-                  {item.value}
-                </p>
+                <p className="text-sm font-semibold text-[#2e3a20] leading-tight">{item.value}</p>
               </div>
             ))}
           </div>
 
-          {/* AI Itinerary */}
           {result.ai_recommendation ? (
             <div className="bg-white border border-[#e0ddd0] rounded-3xl shadow-sm overflow-hidden">
-              {/* Card header */}
               <div className="bg-[#3d4a2e] px-6 py-4 flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#c8d4a0] flex items-center justify-center text-sm">
-                  🗺
-                </div>
+                <div className="w-7 h-7 rounded-full bg-[#c8d4a0] flex items-center justify-center text-sm">🗺</div>
                 <div>
-                  <h3
-                    className="text-white font-semibold text-base"
-                    style={{ fontFamily: "var(--font-playfair), serif" }}
-                  >
+                  <h3 className="text-white font-semibold text-base" style={{ fontFamily: "var(--font-playfair), serif" }}>
                     AI-Generated Itinerary
                   </h3>
-                  <p className="text-[#a8b890] text-xs">
-                    Powered by Amazon Bedrock
-                  </p>
+                  <p className="text-[#a8b890] text-xs">Powered by Amazon Bedrock</p>
                 </div>
               </div>
-
               <div className="px-6 py-6">
                 <ItineraryMarkdown content={result.ai_recommendation} />
               </div>
@@ -311,10 +214,9 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── Footer ── */}
       <footer className="text-center py-8 text-xs text-[#a0a888] border-t border-[#e0ddd0]">
         KelanaAI © 2026 · Built with Amazon Bedrock
       </footer>
-    </main>
+    </div>
   );
 }

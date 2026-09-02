@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Trip } from "@/types/trip";
 import { getTrips } from "@/services/TripServices";
+import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 import TripCard from "@/components/TripCard";
 import Pagination from "@/components/Pagination";
 
@@ -12,6 +14,8 @@ type SortOption = "newest" | "oldest" | "highest_budget";
 const ITEMS_PER_PAGE = 10;
 
 export default function TripsPage() {
+  const { user, ready, signOut } = useAuth();
+
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +25,12 @@ export default function TripsPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    if (!ready) return;
     getTrips()
       .then(setTrips)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [ready]);
 
   // Reset ke page 1 setiap kali filter/sort berubah
   useEffect(() => {
@@ -77,28 +82,26 @@ export default function TripsPage() {
     { value: "highest_budget", label: "Highest Budget", icon: "💰" },
   ];
 
+  if (!ready) return null;
+
   return (
-    <main
+    <div
       className="min-h-screen bg-[#f4f1e8]"
       style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
     >
-      {/* ── Header ── */}
-      <div className="bg-[#3d4a2e]">
-        <div className="max-w-3xl mx-auto px-6 py-8 flex items-center justify-between">
+      <Navbar user={user} onSignOut={signOut} />
+
+      {/* ── Page header ── */}
+      <div className="bg-[#3d4a2e] border-b border-[#4e5e38]">
+        <div className="max-w-3xl mx-auto px-6 py-6 flex items-center justify-between">
           <div>
-            <Link
-              href="/"
-              className="text-[#a8b890] text-xs hover:text-white transition-colors mb-2 inline-block"
-            >
-              ← Back to Planner
-            </Link>
             <h1
-              className="text-3xl font-bold text-white"
+              className="text-2xl font-bold text-white"
               style={{ fontFamily: "var(--font-playfair), serif" }}
             >
               Trip History
             </h1>
-            <p className="text-[#a8b890] text-sm mt-1">
+            <p className="text-[#a8b890] text-sm mt-0.5">
               All your past travel plans in one place
             </p>
           </div>
@@ -272,6 +275,6 @@ export default function TripsPage() {
       <footer className="text-center py-8 text-xs text-[#a0a888] border-t border-[#e0ddd0]">
         KelanaAI © 2026 · Built with Amazon Bedrock
       </footer>
-    </main>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -19,6 +20,8 @@ from services.auth_service import (
     login_user,
     get_db,
 )
+
+from services.kb_service import retrieve_and_generate
 
 # ── App setup ─────────────────────────────────────────────────
 app = FastAPI()
@@ -52,6 +55,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class QuestionRequest(BaseModel):
+    question: str
+
+
+
 # ── Health ────────────────────────────────────────────────────
 @app.get("/")
 def home():
@@ -80,6 +88,20 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 @app.post("/api/v1/auth/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     return login_user(request.email, request.password, db)
+
+# ── Integrate with kelana by amazon bedrock ─────────────────────────────────────────────────────
+@app.post("/api/v1/ask")
+def ask_endpoint(
+    request: QuestionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    result = retrieve_and_generate(request.question)
+    return {
+        "question": request.question,
+        "answer": result["answer"],
+        "documents": result["documents"],
+    }
+
 
 
 # ── Trips ─────────────────────────────────────────────────────

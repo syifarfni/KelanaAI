@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Trip } from "@/types/trip";
 import { getTrip } from "@/services/TripServices";
+import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 import ItineraryMarkdown from "@/components/ItineraryMarkdown";
 
 const STYLE_ICONS: Record<string, string> = {
@@ -16,6 +17,7 @@ const STYLE_ICONS: Record<string, string> = {
 };
 
 export default function TripDetailPage() {
+  const { user, ready, signOut } = useAuth();
   const params = useParams();
   const id = Number(params.id);
 
@@ -24,11 +26,14 @@ export default function TripDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!ready) return;
     getTrip(id)
       .then(setTrip)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, ready]);
+
+  if (!ready) return null;
 
   const date = trip
     ? new Date(trip.created_at).toLocaleDateString("en-US", {
@@ -49,36 +54,24 @@ export default function TripDetailPage() {
     : [];
 
   return (
-    <main
+    <div
       className="min-h-screen bg-[#f4f1e8]"
       style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
     >
-      {/* Header */}
-      <div className="bg-[#3d4a2e]">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Link
-            href="/trips"
-            className="text-[#a8b890] text-xs hover:text-white transition-colors mb-3 inline-block"
-          >
-            ← Back to Trip History
-          </Link>
+      <Navbar user={user} onSignOut={signOut} />
 
-          {loading && (
-            <div className="h-8 w-48 bg-[#ffffff18] rounded-lg animate-pulse" />
-          )}
-
+      {/* Page header */}
+      <div className="bg-[#3d4a2e] border-b border-[#4e5e38]">
+        <div className="max-w-2xl mx-auto px-6 py-6">
+          {loading && <div className="h-7 w-48 bg-[#ffffff18] rounded-lg animate-pulse" />}
           {trip && (
             <>
               <p className="text-[#a8b890] text-xs mb-1">{date}</p>
-              <h1
-                className="text-3xl font-bold text-white capitalize"
-                style={{ fontFamily: "var(--font-playfair), serif" }}
-              >
+              <h1 className="text-2xl font-bold text-white capitalize" style={{ fontFamily: "var(--font-playfair), serif" }}>
                 {trip.destination}
               </h1>
               <p className="text-[#c8d4a0] text-sm mt-1">
-                {trip.days}-day trip · {STYLE_ICONS[trip.travel_style] ?? "🧳"}{" "}
-                {trip.travel_style}
+                {trip.days}-day trip · {STYLE_ICONS[trip.travel_style] ?? "🧳"} {trip.travel_style}
               </p>
             </>
           )}
@@ -174,6 +167,6 @@ export default function TripDetailPage() {
       <footer className="text-center py-8 text-xs text-[#a0a888] border-t border-[#e0ddd0]">
         KelanaAI © 2026 · Built with Amazon Bedrock
       </footer>
-    </main>
+    </div>
   );
 }
