@@ -1,28 +1,80 @@
 import { getToken } from "@/services/AuthService";
+import {
+  Conversation,
+  ConversationDetail,
+  SendMessageResponse,
+} from "@/types/chat";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export interface AskResponse {
-  question: string;
-  answer: string;
-  documents: string[];
+function authHeaders(): HeadersInit {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 }
 
-export async function askAI(question: string): Promise<AskResponse> {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/ask`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ question }),
-  });
-
+async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail ?? `Request failed (${res.status})`);
   }
-
   return res.json();
+}
+
+// ── Conversations ─────────────────────────────────────────────
+export async function createConversation(): Promise<Conversation> {
+  const res = await fetch(`${API_URL}/conversations`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const data = await handleResponse<{
+    conversation_id: number;
+    title: string | null;
+    created_at: string;
+  }>(res);
+  return { id: data.conversation_id, title: data.title, created_at: data.created_at };
+}
+
+export async function listConversations(): Promise<Conversation[]> {
+  const res = await fetch(`${API_URL}/conversations`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<Conversation[]>(res);
+}
+
+export async function getConversationMessages(
+  conversationId: number
+): Promise<ConversationDetail> {
+  const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<ConversationDetail>(res);
+}
+
+export async function renameConversation(
+  conversationId: number,
+  title: string
+): Promise<Conversation> {
+  const res = await fetch(`${API_URL}/conversations/${conversationId}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ title }),
+  });
+  return handleResponse<Conversation>(res);
+}
+
+export async function sendMessage(
+  conversationId: number,
+  question: string
+): Promise<SendMessageResponse> {
+  const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ question }),
+  });
+  return handleResponse<SendMessageResponse>(res);
 }
