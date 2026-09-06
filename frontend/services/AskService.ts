@@ -25,7 +25,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 // ── Conversations ─────────────────────────────────────────────
 export async function createConversation(): Promise<Conversation> {
-  const res = await fetch(`${API_URL}/conversations`, {
+  const res = await fetch(`${API_URL}/api/v1/conversations`, {
     method: "POST",
     headers: authHeaders(),
   });
@@ -38,7 +38,7 @@ export async function createConversation(): Promise<Conversation> {
 }
 
 export async function listConversations(): Promise<Conversation[]> {
-  const res = await fetch(`${API_URL}/conversations`, {
+  const res = await fetch(`${API_URL}/api/v1/conversations`, {
     headers: authHeaders(),
     cache: "no-store",
   });
