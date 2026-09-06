@@ -12,8 +12,8 @@ from models.user import User
 
 # ── Config ────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
-ALGORITHM  = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ALGORITHM  = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
 
 bearer_scheme = HTTPBearer()
 
