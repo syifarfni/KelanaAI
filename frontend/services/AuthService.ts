@@ -41,7 +41,7 @@ export function isLoggedIn(): boolean {
 
 // ── API calls ─────────────────────────────────────────────────
 export async function register(data: RegisterPayload): Promise<RegisterResponse> {
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await fetch(`${API_URL}/api/v1/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -56,7 +56,7 @@ export async function register(data: RegisterPayload): Promise<RegisterResponse>
 }
 
 export async function login(data: LoginPayload): Promise<LoginResponse> {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
