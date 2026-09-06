@@ -48,7 +48,7 @@ export async function listConversations(): Promise<Conversation[]> {
 export async function getConversationMessages(
   conversationId: number
 ): Promise<ConversationDetail> {
-  const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
+  const res = await fetch(`${API_URL}/api/v1/conversations/${conversationId}/messages`, {
     headers: authHeaders(),
     cache: "no-store",
   });
@@ -59,7 +59,7 @@ export async function renameConversation(
   conversationId: number,
   title: string
 ): Promise<Conversation> {
-  const res = await fetch(`${API_URL}/conversations/${conversationId}`, {
+  const res = await fetch(`${API_URL}/api/v1/conversations/${conversationId}`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify({ title }),
@@ -71,7 +71,7 @@ export async function sendMessage(
   conversationId: number,
   question: string
 ): Promise<SendMessageResponse> {
-  const res = await fetch(`${API_URL}/conversations/${conversationId}/messages`, {
+  const res = await fetch(`${API_URL}/api/v1/conversations/${conversationId}/messages`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ question }),

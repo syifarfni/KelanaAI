@@ -24,7 +24,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export async function getTrips(): Promise<Trip[]> {
-  const res = await fetch(`${API_URL}/trips`, {
+  const res = await fetch(`${API_URL}/api/v1/trips`, {
     headers: authHeaders(),
     cache: "no-store",
   });
@@ -32,7 +32,7 @@ export async function getTrips(): Promise<Trip[]> {
 }
 
 export async function getTrip(id: number): Promise<Trip> {
-  const res = await fetch(`${API_URL}/trips/${id}`, {
+  const res = await fetch(`${API_URL}/api/v1/trips/${id}`, {
     headers: authHeaders(),
     cache: "no-store",
   });
@@ -40,7 +40,7 @@ export async function getTrip(id: number): Promise<Trip> {
 }
 
 export async function createTrip(data: CreateTripPayload): Promise<Trip> {
-  const res = await fetch(`${API_URL}/trips`, {
+  const res = await fetch(`${API_URL}/api/v1/trips`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -49,7 +49,7 @@ export async function createTrip(data: CreateTripPayload): Promise<Trip> {
 }
 
 export async function generateRecommendation(tripId: number): Promise<Trip> {
-  const res = await fetch(`${API_URL}/trips/${tripId}/generate`, {
+  const res = await fetch(`${API_URL}/api/v1/trips/${tripId}/generate`, {
     method: "POST",
     headers: authHeaders(),
   });
